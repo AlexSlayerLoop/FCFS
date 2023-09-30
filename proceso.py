@@ -1,23 +1,21 @@
 from random import choice, randint
 
 class Process:
-    
-    def __init__(self, n_veces = 1):
+    def __init__(self, cantidadProcesos = 1):
         # constructor
         self.id = 0
-        self.procesos = {
-            "id": [],
-            "tiempo_max": [],
-            "operador": [],
-            "num1": [],
-            "num2": [],
-            "resultado": []
-        }
+        self.estadistica_tiempos = {"id": [], "llegada": [], "finalizacion": [], "retorno": [], "respuesta": [], "espera": [], "servicio": []}
         
-        for _ in range(n_veces):
-            self.agregar_proceso()
+        self.dict_nuevos     = {"id": [], "tiempo_max": [], "operador": [], "num1": [], "num2": [], "resultado": [], "tiempo_transcurrido": [], "tiempo_restante": [], "trans_en_bloq": []}
+        self.dict_listos     = {"id": [], "tiempo_max": [], "operador": [], "num1": [], "num2": [], "resultado": [], "tiempo_transcurrido": [], "tiempo_restante": [], "trans_en_bloq": []}
+        self.dict_ejecucion  = {"id": [], "tiempo_max": [], "operador": [], "num1": [], "num2": [], "resultado": [], "tiempo_transcurrido": [], "tiempo_restante": [], "trans_en_bloq": []}
+        self.dict_bloqueados = {"id": [], "tiempo_max": [], "operador": [], "num1": [], "num2": [], "resultado": [], "tiempo_transcurrido": [], "tiempo_restante": [], "trans_en_bloq": []}
+        self.dict_terminados = {"id": [], "tiempo_max": [], "num1": [], "operador": [], "num2": [], "resultado": [], "tiempo_transcurrido": [], "tiempo_restante": [], "trans_en_bloq": []}
+        
+        for _ in range(cantidadProcesos):
+            self.agregar_nuevo_proceso()
     
-    def agregar_proceso(self):
+    def agregar_nuevo_proceso(self):
         # generar datos de procesos aleatoriamente
         tiempo_maximo = randint(6, 18)
         operador = choice(('+', '-', '*', '/', '%'))
@@ -26,12 +24,15 @@ class Process:
         resultado = round(self.hacer_operacion(operador, num1, num2), 2)
         
         # insertarlos de el diccionarios de procesos 
-        self.procesos["id"].append(self.id)
-        self.procesos["tiempo_max"].append(tiempo_maximo)
-        self.procesos["operador"].append(operador)
-        self.procesos["num1"].append(num1)
-        self.procesos["num2"].append(num2)
-        self.procesos["resultado"].append(resultado)
+        self.dict_nuevos["id"].append(self.id)
+        self.dict_nuevos["tiempo_max"].append(tiempo_maximo)
+        self.dict_nuevos["operador"].append(operador)
+        self.dict_nuevos["num1"].append(num1)
+        self.dict_nuevos["num2"].append(num2)
+        self.dict_nuevos["resultado"].append(resultado)
+        self.dict_nuevos["tiempo_restante"].append(tiempo_maximo)
+        self.dict_nuevos["tiempo_transcurrido"].append(0)
+        self.dict_nuevos["trans_en_bloq"].append(0)
         
         # incrementar id 
         self.id += 1
@@ -45,8 +46,8 @@ class Process:
             num1 % num2 if operador == '%' else None
         )
     
-    def numero_de_procesos(self) -> int:
+    def num_procesos_nuevos(self) -> int:
         # retorna el numero de procesos
-        return len(self.procesos["id"])
+        return len(self.dict_nuevos["id"])
     
     
