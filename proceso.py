@@ -4,7 +4,7 @@ class Process:
     def __init__(self, cantidadProcesos = 1):
         # constructor
         self.id = 0
-        self.estadistica_tiempos = {"id": [], "llegada": [], "finalizacion": [], "retorno": [], "respuesta": [], "espera": [], "servicio": []}
+        self.dict_estadisticas = {"id": [], "llegada": [], "finalizacion": [], "retorno": [], "respuesta": [], "espera": [], "servicio": [], "llegada_ejecucion": [], "llegada_memoria": []}
         
         self.dict_nuevos     = {"id": [], "tiempo_max": [], "operador": [], "num1": [], "num2": [], "resultado": [], "tiempo_transcurrido": [], "tiempo_restante": [], "trans_en_bloq": []}
         self.dict_listos     = {"id": [], "tiempo_max": [], "operador": [], "num1": [], "num2": [], "resultado": [], "tiempo_transcurrido": [], "tiempo_restante": [], "trans_en_bloq": []}
@@ -14,6 +14,14 @@ class Process:
         
         for _ in range(cantidadProcesos):
             self.agregar_nuevo_proceso()
+            self.init_estadisticas() # inicializar cada lista 
+            self.id += 1 # incrementar id
+    
+    def init_estadisticas(self):
+        self.dict_estadisticas["id"].append(self.id)
+        self.dict_estadisticas["llegada"].append(self.id)
+        self.dict_estadisticas["servicio"].append(0)
+        self.dict_estadisticas["finalizacion"].append(0)
     
     def agregar_nuevo_proceso(self):
         # generar datos de procesos aleatoriamente
@@ -33,9 +41,6 @@ class Process:
         self.dict_nuevos["tiempo_restante"].append(tiempo_maximo)
         self.dict_nuevos["tiempo_transcurrido"].append(0)
         self.dict_nuevos["trans_en_bloq"].append(0)
-        
-        # incrementar id 
-        self.id += 1
     
     def hacer_operacion(self, operador: str, num1: int, num2: int):
         return (
