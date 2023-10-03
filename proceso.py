@@ -4,7 +4,7 @@ class Process:
     def __init__(self, cantidadProcesos = 1):
         # constructor
         self.id = 0
-        self.dict_estadisticas = {"id": [], "llegada": [], "finalizacion": [], "retorno": [], "respuesta": [], "espera": [], "servicio": [], "llegada_ejecucion": [], "llegada_memoria": []}
+        self.dict_estadisticas = {"id": [], "llegada_memoria": [], "finalizacion": [], "retorno": [], "respuesta": [], "espera": [], "servicio": [], "llegada_ejecucion": []}
         
         self.dict_nuevos     = {"id": [], "tiempo_max": [], "operador": [], "num1": [], "num2": [], "resultado": [], "tiempo_transcurrido": [], "tiempo_restante": [], "trans_en_bloq": []}
         self.dict_listos     = {"id": [], "tiempo_max": [], "operador": [], "num1": [], "num2": [], "resultado": [], "tiempo_transcurrido": [], "tiempo_restante": [], "trans_en_bloq": []}
@@ -19,7 +19,6 @@ class Process:
     
     def init_estadisticas(self):
         self.dict_estadisticas["id"].append(self.id)
-        self.dict_estadisticas["llegada"].append(self.id)
         self.dict_estadisticas["servicio"].append(0)
         self.dict_estadisticas["finalizacion"].append(0)
     
