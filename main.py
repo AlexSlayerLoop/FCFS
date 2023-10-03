@@ -6,7 +6,10 @@ from proceso import Process
 from tiempo import Contador
 from getpass import getpass
 
+os.system("cls") # para borrar la ruta del archivo al comenzar
 pausado = False
+contador_general = Contador()
+cantidadProcesos = 0
 
 # funciones para eventos
 def on_p_pressed():
@@ -43,16 +46,22 @@ def on_e_pressed():
         tiempo_finalizacion = contador_general.obtener_tiempo_actual()
         id_pos = procesos.dict_terminados["id"][-1] # obtener el id del proceso que finalizo
         procesos.dict_estadisticas["finalizacion"][id_pos] = tiempo_finalizacion
+    
+def on_n_pressed():
+    global cantidadProcesos
+    cantidadProcesos += 1
+    procesos.agregar_nuevo_proceso()
+    procesos.init_estadisticas()
+    procesos.incrementar_id()
 
 # asignar botones para eventos
 keyboard.add_hotkey('p', on_p_pressed) 
 keyboard.add_hotkey('c', on_c_pressed)
 keyboard.add_hotkey('i', on_i_pressed)
 keyboard.add_hotkey('e', on_e_pressed)
+keyboard.add_hotkey('n', on_n_pressed)
 
 # --------- configuracion inicial --------------
-os.system("cls") # para borrar la ruta del archivo al comenzar
-contador_general = Contador()
 
 while True:
     try:
@@ -126,7 +135,7 @@ while True: # Bucle principal
         print(contador_general.actualizar_tiempo(), flush=True)
         
         # imprimir botones
-        print("\n[P]ausar      [C]ontinuar      [I]terrupcion      [E]rror")
+        print("\n[P]ausar      [C]ontinuar      [I]terrupcion      [E]rror      [N]uevo      [B]CP")
         
         if len(procesos.dict_ejecucion['id']) == 1:
             # actualizar los tiempos en ejecucion
@@ -158,7 +167,7 @@ while True: # Bucle principal
             break
         sleep(1) 
 
-getpass("\n\nPresiona cualquier tecla para ver las estadisticas...")
+getpass("\n\nPresiona <enter> para ver las estadisticas...")
 os.system("cls")
 # obtener listas del diccionario Estadisticas para hacer calculos
 lista_llegada = procesos.dict_estadisticas["llegada_memoria"]    
@@ -193,7 +202,6 @@ print("\nTabla de Terminados (con proposito de debugeo)" + '\n' + tabla_terminad
 
 # imprimir estadisticas 
 estadisticas = {key: value for key, value in procesos.dict_estadisticas.items() if key != "llegada_ejecucion"}
-
-tabla_estadisticas = tabulate(estadisticas, headers="keys", tablefmt="simple_outline")
+tabla_estadisticas = tabulate(procesos.dict_estadisticas, headers="keys", tablefmt="simple_outline")
 print("\nTabla Estadisticas" + '\n' + tabla_estadisticas)
         

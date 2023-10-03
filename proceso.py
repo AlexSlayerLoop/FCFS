@@ -15,8 +15,11 @@ class Process:
         for _ in range(cantidadProcesos):
             self.agregar_nuevo_proceso()
             self.init_estadisticas() # inicializar cada lista 
-            self.id += 1 # incrementar id
+            self.incrementar_id()
     
+    def incrementar_id(self):
+        self.id += 1 # incrementar id
+        
     def init_estadisticas(self):
         self.dict_estadisticas["id"].append(self.id)
         self.dict_estadisticas["servicio"].append(0)
