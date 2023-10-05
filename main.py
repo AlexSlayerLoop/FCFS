@@ -26,7 +26,7 @@ def on_i_pressed():
             pass
         else:
             procesos.dict_bloqueados[key].append(p)
-            
+            # registrar momento en que cada proceso llega a memoria (cola de listos)
             if len(procesos.dict_estadisticas["llegada_memoria"]) < cantidadProcesos:
                 tiempo_actual = contador_general.obtener_tiempo_actual()
                 procesos.dict_estadisticas["llegada_memoria"].append(tiempo_actual)
@@ -43,7 +43,7 @@ def on_e_pressed():
             p = procesos.dict_ejecucion[key].pop(0)
             procesos.dict_terminados[key].append(p)
           
-        # registrar el momento en que cada prceso termina 
+        # registrar el momento en que cada proceso termina 
         tiempo_finalizacion = contador_general.obtener_tiempo_actual()
         id_pos = procesos.dict_terminados["id"][-1] # obtener el id del proceso que finalizo
         procesos.dict_estadisticas["finalizacion"][id_pos] = tiempo_finalizacion
