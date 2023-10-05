@@ -29,6 +29,10 @@ def on_i_pressed():
             pass
         else:
             procesos.dict_bloqueados[key].append(p)
+            # registrar momento en que cada proceso llega a memoria (cola de listos)
+            if len(procesos.dict_estadisticas["llegada_memoria"]) < cantidadProcesos:
+                tiempo_actual = contador_general.obtener_tiempo_actual()
+                procesos.dict_estadisticas["llegada_memoria"].append(tiempo_actual)
 
 def on_e_pressed():
     try: 
@@ -42,7 +46,7 @@ def on_e_pressed():
             p = procesos.dict_ejecucion[key].pop(0)
             procesos.dict_terminados[key].append(p)
           
-        # registrar el momento en que cada prceso termina 
+        # registrar el momento en que cada proceso termina 
         tiempo_finalizacion = contador_general.obtener_tiempo_actual()
         id_pos = procesos.dict_terminados["id"][-1] # obtener el id del proceso que finalizo
         procesos.dict_estadisticas["finalizacion"][id_pos] = tiempo_finalizacion
@@ -77,7 +81,7 @@ while len(procesos.dict_listos["id"]) < 5 and len(procesos.dict_nuevos["id"]) > 
     for key in procesos.dict_nuevos.keys():
         p = procesos.dict_nuevos[key].pop(0)
         procesos.dict_listos[key].append(p)
-            
+           
     # registrar el momento en que entra un proceso a la memoria del procesador (cola listos)
     procesos.dict_estadisticas["llegada_memoria"].append(contador_general.obtener_tiempo_actual()) # el tiempo sera cero porque entran de golpe varios procesos
 # ----------------------------------------------
@@ -135,7 +139,7 @@ while True: # Bucle principal
         print(contador_general.actualizar_tiempo(), flush=True)
         
         # imprimir botones
-        print("\n[P]ausar      [C]ontinuar      [I]terrupcion      [E]rror      [N]uevo      [B]CP")
+        print("\n[P]ausar      [C]ontinuar      [I]nterrupcion      [E]rror      [N]uevo      [B]CP")
         
         if len(procesos.dict_ejecucion['id']) == 1:
             # actualizar los tiempos en ejecucion
@@ -167,34 +171,35 @@ while True: # Bucle principal
             break
         sleep(1) 
 
-getpass("\n\nPresiona <enter> para ver las estadisticas...")
+getpass("\n\nPresiona <Enter> para ver las estadisticas...")
 os.system("cls")
 # obtener listas del diccionario Estadisticas para hacer calculos
 lista_llegada = procesos.dict_estadisticas["llegada_memoria"]    
 lista_finalizacion = procesos.dict_estadisticas["finalizacion"]
-lista_llegada_ejecucion = procesos.dict_estadisticas["llegada_ejecucion"]
-procesos.dict_estadisticas["espera"] = procesos.dict_estadisticas["llegada_ejecucion"]
+lista_llegada_ejecucion = procesos.dict_estadisticas["llegada_ejecucion"] # lista con proposito de debugeo
+lista_retorno = [x - y for x, y in zip(lista_finalizacion, lista_llegada)]
+lista_respuesta = [x - y for x, y in zip(lista_llegada_ejecucion, lista_llegada)] # tiempo que dura en listos hasta que llega a ejecucion por primera vez
 
 # calcular el tiempo de retorno: finalizacion - llegada
-lista_retorno = [x - y for x, y in zip(lista_finalizacion, lista_llegada)]   
 procesos.dict_estadisticas["retorno"] = lista_retorno
 
 # calcular tiempo respuesta: llegada_ejecucion - llegada
-lista_respuesta = [x - y for x, y in zip(lista_llegada_ejecucion, lista_llegada)]
 procesos.dict_estadisticas["respuesta"] = lista_respuesta
 
 # calcular tiempo de servicio (tiempo que el proceso ha estado dentro del procesador)
-for i in range(len(procesos.dict_terminados["resultado"])):
-    if procesos.dict_terminados["resultado"][i] == "error":
-        procesos.dict_estadisticas["servicio"][i] = procesos.dict_terminados["tiempo_transcurrido"][i]
+for i in range(len(procesos.dict_terminados["id"])):
+    pos = procesos.dict_terminados["id"][i] # obtener la posicion donde insertar
+    if procesos.dict_terminados["resultado"][i] == "Error":
+        procesos.dict_estadisticas["servicio"][pos] = procesos.dict_terminados["tiempo_transcurrido"][i]
+        
+    elif procesos.dict_terminados["trans_en_bloq"][i] > 0:
+        procesos.dict_estadisticas["servicio"][pos] = procesos.dict_terminados["tiempo_transcurrido"][i] \
+                                                    + procesos.dict_terminados["trans_en_bloq"][i]
     else:
-        procesos.dict_estadisticas["servicio"][i] = procesos.dict_terminados["tiempo_max"][i]
-            
-for i in range(len(procesos.dict_terminados["trans_en_bloq"])):
-    if procesos.dict_terminados["trans_en_bloq"][i] > 0: 
-            procesos.dict_estadisticas["servicio"][i] = procesos.dict_terminados["tiempo_transcurrido"][i]
-    else:
-            procesos.dict_estadisticas["servicio"][i] = procesos.dict_terminados["tiempo_max"][i]
+        procesos.dict_estadisticas["servicio"][pos] = procesos.dict_terminados["tiempo_max"][i]
+
+# calcular tiempo espera
+procesos.dict_estadisticas["espera"] = [x - y for x, y in zip(lista_finalizacion, procesos.dict_estadisticas["servicio"])]
 
 # imprimir procesos terminados 
 tabla_terminados = tabulate(procesos.dict_terminados, headers="keys", tablefmt="simple_outline") # no se debe mostrar
@@ -202,6 +207,7 @@ print("\nTabla de Terminados (con proposito de debugeo)" + '\n' + tabla_terminad
 
 # imprimir estadisticas 
 estadisticas = {key: value for key, value in procesos.dict_estadisticas.items() if key != "llegada_ejecucion"}
+
 tabla_estadisticas = tabulate(procesos.dict_estadisticas, headers="keys", tablefmt="simple_outline")
 print("\nTabla Estadisticas" + '\n' + tabla_estadisticas)
         
