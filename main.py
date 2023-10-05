@@ -4,6 +4,7 @@ import os
 import keyboard
 from proceso import Process
 from tiempo import Contador
+from getpass import getpass
 
 pausado = False
 
@@ -25,6 +26,10 @@ def on_i_pressed():
             pass
         else:
             procesos.dict_bloqueados[key].append(p)
+            
+            if len(procesos.dict_estadisticas["llegada_memoria"]) < cantidadProcesos:
+                tiempo_actual = contador_general.obtener_tiempo_actual()
+                procesos.dict_estadisticas["llegada_memoria"].append(tiempo_actual)
 
 def on_e_pressed():
     try: 
@@ -67,7 +72,7 @@ while len(procesos.dict_listos["id"]) < 5 and len(procesos.dict_nuevos["id"]) > 
     for key in procesos.dict_nuevos.keys():
         p = procesos.dict_nuevos[key].pop(0)
         procesos.dict_listos[key].append(p)
-            
+           
     # registrar el momento en que entra un proceso a la memoria del procesador (cola listos)
     procesos.dict_estadisticas["llegada_memoria"].append(contador_general.obtener_tiempo_actual()) # el tiempo sera cero porque entran de golpe varios procesos
 # ----------------------------------------------
@@ -154,52 +159,43 @@ while True: # Bucle principal
             break
         sleep(1) 
 
-ver_estaditicas = input("\n[La memoria del procesador ya se encuntra vacia]\nDesea ver las estadisticas [s/n]: ").lower()
-# validar que ingreso 
-if ver_estaditicas == 's':
-    os.system("cls")
-    
-    # obtener listas del diccionario Estadisticas para hacer calculos
-    lista_llegada = procesos.dict_estadisticas["llegada"]    
-    lista_finalizacion = procesos.dict_estadisticas["finalizacion"]
-    lista_llegada_ejecucion = procesos.dict_estadisticas["llegada_ejecucion"]
-    lista_llegada_memoria = procesos.dict_estadisticas["llegada_memoria"]
-    
-    # calcular el tiempo de retorno: finalizacion - llegada
-    lista_retorno = [x - y for x, y in zip(lista_finalizacion, lista_llegada)]   
-    procesos.dict_estadisticas["retorno"] = lista_retorno
-    
-    # calcular tiempo respuesta: llegada_ejecucion - llegada
-    lista_respuesta = [x - y for x, y in zip(lista_llegada_ejecucion, lista_llegada)]
-    procesos.dict_estadisticas["respuesta"] = lista_respuesta
-    
-    # calcular tiempo Espera: llegada_memoria - llegada
-    lista_espera = [x - y for x, y in zip(lista_llegada_memoria, lista_llegada)]
-    for i in range(len(lista_espera)):
-        if lista_espera[i] < 0:
-            lista_espera[i] = 0
-    procesos.dict_estadisticas["espera"] = lista_espera
-    
-    # calcular tiempo de servicio (tiempo que el proceso ha estado dentro del procesador)
-    for i in range(len(procesos.dict_terminados["resultado"])):
-        if procesos.dict_terminados["resultado"][i] == "error":
-            procesos.dict_estadisticas["servicio"][i] = procesos.dict_terminados["tiempo_transcurrido"][i]
-        else:
-            procesos.dict_estadisticas["servicio"][i] = procesos.dict_terminados["tiempo_max"][i]
-                
-    for i in range(len(procesos.dict_terminados["trans_en_bloq"])):
-        if procesos.dict_terminados["trans_en_bloq"][i] > 0: 
-              procesos.dict_estadisticas["servicio"][i] = procesos.dict_terminados["tiempo_transcurrido"][i]
-        else:
-              procesos.dict_estadisticas["servicio"][i] = procesos.dict_terminados["tiempo_max"][i]
-    
-    # imprimir procesos terminados 
-    tabla_terminados = tabulate(procesos.dict_terminados, headers="keys", tablefmt="simple_outline") # no se debe mostrar
-    print("\nTabla de Terminados (con proposito de debugeo)" + '\n' + tabla_terminados)
-    
-    # imprimir estadisticas 
-    estadisticas = {key: value for key, value in procesos.dict_estadisticas.items() if key == "llegada_memoria" or key != "llegada_ejecucion"}
-    
-    tabla_estadisticas = tabulate(procesos.dict_estadisticas, headers="keys", tablefmt="simple_outline")
-    print("\nTabla Estadisticas" + '\n' + tabla_estadisticas)
-          
+getpass("\n\nPresiona <Enter> para ver las estadisticas...")
+os.system("cls")
+# obtener listas del diccionario Estadisticas para hacer calculos
+lista_llegada = procesos.dict_estadisticas["llegada_memoria"]    
+lista_finalizacion = procesos.dict_estadisticas["finalizacion"]
+lista_llegada_ejecucion = procesos.dict_estadisticas["llegada_ejecucion"] # lista con proposito de debugeo
+lista_retorno = [x - y for x, y in zip(lista_finalizacion, lista_llegada)]
+lista_respuesta = [x - y for x, y in zip(lista_llegada_ejecucion, lista_llegada)] # tiempo que dura en listos hasta que llega a ejecucion por primera vez
+
+# calcular el tiempo de retorno: finalizacion - llegada
+procesos.dict_estadisticas["retorno"] = lista_retorno
+
+# calcular tiempo respuesta: llegada_ejecucion - llegada
+procesos.dict_estadisticas["respuesta"] = lista_respuesta
+
+# calcular tiempo de servicio (tiempo que el proceso ha estado dentro del procesador)
+for i in range(len(procesos.dict_terminados["id"])):
+    pos = procesos.dict_terminados["id"][i] # obtener la posicion donde insertar
+    if procesos.dict_terminados["resultado"][i] == "Error":
+        procesos.dict_estadisticas["servicio"][pos] = procesos.dict_terminados["tiempo_transcurrido"][i]
+        
+    elif procesos.dict_terminados["trans_en_bloq"][i] > 0:
+        procesos.dict_estadisticas["servicio"][pos] = procesos.dict_terminados["tiempo_transcurrido"][i] \
+                                                    + procesos.dict_terminados["trans_en_bloq"][i]
+    else:
+        procesos.dict_estadisticas["servicio"][pos] = procesos.dict_terminados["tiempo_max"][i]
+
+# calcular tiempo espera
+procesos.dict_estadisticas["espera"] = [x - y for x, y in zip(lista_finalizacion, procesos.dict_estadisticas["servicio"])]
+
+# imprimir procesos terminados 
+tabla_terminados = tabulate(procesos.dict_terminados, headers="keys", tablefmt="simple_outline") # no se debe mostrar
+print("\nTabla de Terminados (con proposito de debugeo)" + '\n' + tabla_terminados)
+
+# imprimir estadisticas 
+estadisticas = {key: value for key, value in procesos.dict_estadisticas.items() if key != "llegada_ejecucion"}
+
+tabla_estadisticas = tabulate(estadisticas, headers="keys", tablefmt="simple_outline")
+print("\nTabla Estadisticas" + '\n' + tabla_estadisticas)
+        
