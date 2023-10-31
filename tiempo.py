@@ -14,7 +14,7 @@ class Contador:
             [tiempo_formateado]
         ]
         self.contador_general += seg
-        return tabulate(tabla_reloj, headers="firstrow", tablefmt="simple_outline", stralign="center")
+        return tabulate(tabla_reloj, headers="firstrow", stralign="center")
     
     def obtener_tiempo_actual(self):
         return self.contador_general

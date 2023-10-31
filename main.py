@@ -10,6 +10,7 @@ os.system("cls") # para borrar la ruta del archivo al comenzar
 pausado = False
 contador_general = Contador()
 cantidadProcesos = 0
+quantum = None
 
 # funciones para eventos
 def on_p_pressed():
@@ -21,6 +22,10 @@ def on_c_pressed():
     pausado = False
     
 def on_i_pressed():
+    # eliminar clave quantum actual
+    quantum_key = "trans_quantum"
+    if quantum_key in procesos.dict_ejecucion:
+        del procesos.dict_ejecucion[quantum_key]
     # sacar que proceso en ejecucion actual
     for key in procesos.dict_ejecucion.keys():
         try:
@@ -33,8 +38,12 @@ def on_i_pressed():
             if len(procesos.dict_estadisticas["llegada_memoria"]) < cantidadProcesos:
                 tiempo_actual = contador_general.obtener_tiempo_actual()
                 procesos.dict_estadisticas["llegada_memoria"].append(tiempo_actual)
+    procesos.dict_ejecucion[quantum_key] = [0]
 
 def on_e_pressed():
+    quantum_key = "trans_quantum"
+    if quantum_key in procesos.dict_ejecucion:
+        del procesos.dict_ejecucion[quantum_key]
     try: 
         # marcar Error en el proceso en ejecucion
         procesos.dict_ejecucion["resultado"][0] = "Error" 
@@ -68,10 +77,10 @@ def on_b_pressed():
         
     print("Todos los procesos")
     procesos_totales_paraMostrar = {key: value for key, value in procesos_totales.items() if key != "resultado"}
-    print(tabulate(procesos_totales_paraMostrar, headers="keys", tablefmt="simple_outline"))
+    print(tabulate(procesos_totales_paraMostrar, headers="keys"))
     
     print("Procesos terminados")
-    print(tabulate(procesos.dict_terminados, headers="keys", tablefmt="simple_outline"))
+    print(tabulate(procesos.dict_terminados, headers="keys"))
     
     # calcular estadisticas de procesos totales
     estadisticas = calcular_estadisticas(procesos_totales)   
@@ -81,7 +90,7 @@ def on_b_pressed():
         estadisticas[key] = [max(0, x) for x in estadisticas[key]]
    
     print("\nCola de Estadisticas")
-    print(tabulate(estadisticas, headers="keys", tablefmt="simple_outline"))
+    print(tabulate(estadisticas, headers="keys"))
     
     print("Press [C] to continue")
 
@@ -115,7 +124,7 @@ def calcular_estadisticas(esteDiccionario: dict) -> dict:
     procesos.dict_estadisticas["espera"] = [x - y for x, y in zip(lista_finalizacion, procesos.dict_estadisticas["servicio"])]
 
     # imprimir procesos terminados 
-    # tabla_terminados = tabulate(procesos.dict_terminados, headers="keys", tablefmt="simple_outline") # no se debe mostrar
+    # tabla_terminados = tabulate(procesos.dict_terminados, headers="keys") # no se debe mostrar
     # print("\nTabla de Terminados (con proposito de debugeo)" + '\n' + tabla_terminados)
 
     # retornar estadisticas
@@ -132,11 +141,21 @@ keyboard.add_hotkey('b', on_b_pressed)
 # --------- configuracion inicial --------------
 
 while True:
+    # ingresar candtidad de procesos
     try:
         cantidadProcesos = int(input("Ingresa el numero de procesos: "))
         break
     except ValueError:
         print("Error, ingrese un numero entero")
+
+while True:
+    # ingresar valor de quantum
+    try:
+        quantum = int(input("Ingresa el valor del quantum: "))
+        break
+    except ValueError:
+        print("Error, ingrese un numero entero")
+    
 procesos = Process(cantidadProcesos=cantidadProcesos)
  
 # llenar la cola de LISTOS para ejecutar
@@ -168,6 +187,7 @@ while True: # Bucle principal
         
         # si aun no hay proceso en ejecucion y hay un procesos en la cola de listos, agraga uno a ejecucion
         if len(procesos.dict_ejecucion["id"]) == 0 and len(procesos.dict_listos["id"]) > 0:
+            procesos.dict_ejecucion["trans_quantum"] = [0] # crear la llave transcurrido en quantum e inicializarla
             # agregar proceso a ejecucion
             for key in procesos.dict_listos.keys():
                 p = procesos.dict_listos[key].pop(0)
@@ -186,18 +206,18 @@ while True: # Bucle principal
         
         # imprimir tablas 
         tabla_procesos_nuevos = [["# procesos nuevos"], [procesos.num_procesos_nuevos()]]
-        print(tabulate(tabla_procesos_nuevos, headers="firstrow", tablefmt="simple_outline"), flush=True)
+        print(tabulate(tabla_procesos_nuevos, headers="firstrow"), flush=True)
         
-        tabla_listos = tabulate(listos, headers="keys", tablefmt="simple_outline")
+        tabla_listos = tabulate(listos, headers="keys")
         print("\nCola de Listos" + '\n' + tabla_listos, flush=True) 
         
-        tabla_ejecucion_actual = tabulate(enEjecucion, headers="keys", tablefmt="simple_outline") 
+        tabla_ejecucion_actual = tabulate(enEjecucion, headers="keys") 
         print("\nProceso en Ejecucion" + '\n' + tabla_ejecucion_actual, flush=True) 
         
-        tabla_bloqueados = tabulate(bloqueados, headers="keys", tablefmt="simple_outline")
+        tabla_bloqueados = tabulate(bloqueados, headers="keys")
         print("\nCola de Bloqueados" + '\n' + tabla_bloqueados, flush=True)
         
-        tabla_terminados = tabulate(terminados, headers="keys", tablefmt="simple_outline")
+        tabla_terminados = tabulate(terminados, headers="keys")
         print("\nCola de Terminados" + '\n' + tabla_terminados + '\n', flush=True)
         
         print(contador_general.actualizar_tiempo(), flush=True)
@@ -209,16 +229,28 @@ while True: # Bucle principal
             # actualizar los tiempos en ejecucion
             procesos.dict_ejecucion["tiempo_transcurrido"][0] += 1
             procesos.dict_ejecucion["tiempo_restante"][0] -= 1
+            procesos.dict_ejecucion["trans_quantum"][0] += 1
             
-            if procesos.dict_ejecucion["tiempo_restante"][0] == 0: # cuando tiempo restante llega a cero, enviar a termanidos 
+            if procesos.dict_ejecucion["trans_quantum"][0] == quantum: # si trancurre el tiempo de quantum, mandar a la cola de listos
+                del procesos.dict_ejecucion["trans_quantum"] # eliminar el valor de quantum antes de salir de ejecucion
                 for key in procesos.dict_ejecucion.keys():
                     p = procesos.dict_ejecucion[key].pop()
-                    procesos.dict_terminados[key].append(p)
-                # registrar el momento en que cada proceso termina
-                tiempo_finalizacion = contador_general.obtener_tiempo_actual()
-                id_pos = procesos.dict_terminados["id"][-1] # obtener el id del proceso que finalizo
-                procesos.dict_estadisticas["finalizacion"][id_pos] = tiempo_finalizacion
-        
+                    procesos.dict_listos[key].append(p)
+            
+            try:
+                if procesos.dict_ejecucion["tiempo_restante"][0] == 0: # cuando tiempo restante llega a cero, enviar a termanidos 
+                    # eliminar el valor de quantum antes de salir de ejecucion 
+                    del procesos.dict_ejecucion["trans_quantum"] 
+                    for key in procesos.dict_ejecucion.keys():
+                        p = procesos.dict_ejecucion[key].pop()
+                        procesos.dict_terminados[key].append(p)
+                    # registrar el momento en que cada proceso termina
+                    tiempo_finalizacion = contador_general.obtener_tiempo_actual()
+                    id_pos = procesos.dict_terminados["id"][-1] # obtener el id del proceso que finalizo
+                    procesos.dict_estadisticas["finalizacion"][id_pos] = tiempo_finalizacion
+            except IndexError:
+                pass
+
         # aumentar el tiempo trasncurrido en bloqueado para todos los procesos bloqueados
         if len(procesos.dict_bloqueados["id"]) > 0:
             procesos.dict_bloqueados["trans_en_bloq"] = [num + 1 for num in  procesos.dict_bloqueados["trans_en_bloq"]]
@@ -239,10 +271,10 @@ getpass("\n\nPresiona <Enter> para ver las estadisticas...")
 os.system("cls")
 
 # imprimir procesos terminados 
-tabla_terminados = tabulate(procesos.dict_terminados, headers="keys", tablefmt="simple_outline") # no se debe mostrar
+tabla_terminados = tabulate(procesos.dict_terminados, headers="keys") # no se debe mostrar
 print("\nTabla de Terminados (con proposito de debugeo)" + '\n' + tabla_terminados)
 
 estadisticas = calcular_estadisticas(procesos.dict_terminados)
-tabla_estadisticas = tabulate(estadisticas, headers="keys", tablefmt="simple_outline")
+tabla_estadisticas = tabulate(estadisticas, headers="keys")
 print("\nTabla Estadisticas" + '\n' + tabla_estadisticas)
    

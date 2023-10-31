@@ -6,10 +6,10 @@ class Process:
         self.id = 0
         self.dict_estadisticas = {"id": [], "llegada_memoria": [], "finalizacion": [], "retorno": [], "respuesta": [], "espera": [], "servicio": [], "llegada_ejecucion": []}
         
-        self.dict_nuevos     = {"id": [], "tiempo_max": [], "operador": [], "num1": [], "num2": [], "resultado": [], "tiempo_transcurrido": [], "tiempo_restante": [], "trans_en_bloq": []}
-        self.dict_listos     = {"id": [], "tiempo_max": [], "operador": [], "num1": [], "num2": [], "resultado": [], "tiempo_transcurrido": [], "tiempo_restante": [], "trans_en_bloq": []}
-        self.dict_ejecucion  = {"id": [], "tiempo_max": [], "operador": [], "num1": [], "num2": [], "resultado": [], "tiempo_transcurrido": [], "tiempo_restante": [], "trans_en_bloq": []}
-        self.dict_bloqueados = {"id": [], "tiempo_max": [], "operador": [], "num1": [], "num2": [], "resultado": [], "tiempo_transcurrido": [], "tiempo_restante": [], "trans_en_bloq": []}
+        self.dict_nuevos     = {"id": [], "tiempo_max": [], "num1": [], "operador": [], "num2": [], "resultado": [], "tiempo_transcurrido": [], "tiempo_restante": [], "trans_en_bloq": []}
+        self.dict_listos     = {"id": [], "tiempo_max": [], "num1": [], "operador": [], "num2": [], "resultado": [], "tiempo_transcurrido": [], "tiempo_restante": [], "trans_en_bloq": []}
+        self.dict_ejecucion  = {"id": [], "tiempo_max": [], "num1": [], "operador": [], "num2": [], "resultado": [], "tiempo_transcurrido": [], "tiempo_restante": [], "trans_en_bloq": []}
+        self.dict_bloqueados = {"id": [], "tiempo_max": [], "num1": [], "operador": [], "num2": [], "resultado": [], "tiempo_transcurrido": [], "tiempo_restante": [], "trans_en_bloq": []}
         self.dict_terminados = {"id": [], "tiempo_max": [], "num1": [], "operador": [], "num2": [], "resultado": [], "tiempo_transcurrido": [], "tiempo_restante": [], "trans_en_bloq": []}
         
         for _ in range(cantidadProcesos):
